@@ -180,10 +180,16 @@ endf
 "   au FileType html let b:AutoPairs = AutoPairsDefine({'<!--' : '-->'}, ['{'])
 "   add <!-- --> pair and remove '{' for html file
 func! AutoPairsDefine(pairs, ...)
+    if exists("b:autopairs_defined")
+        return
+    endif
+    let b:autopairs_defined = 1
     let r = AutoPairsDefaultPairs()
     if a:0 > 0
         for open in a:1
-            unlet r[open]
+            if has_key(r, open)
+                unlet r[open]
+            endif
         endfor
     end
     for [open, close] in items(a:pairs)
