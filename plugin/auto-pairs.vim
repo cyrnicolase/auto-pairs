@@ -16,6 +16,14 @@ if !exists('g:AutoPairs')
     let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"', '```':'```', '"""':'"""', "'''":"'''", "`":"`"}
 end
 
+if !exists('g:AutoPairsExclude')
+    let g:AutoPairsExclude = {}
+end
+
+if !exists('g:AutoPairsExtra')
+    let g:AutoPairsExtra = {}
+end
+
 " default pairs base on filetype
 func! AutoPairsDefaultPairs()
     if exists('b:autopairs_defaultpairs')
@@ -25,7 +33,10 @@ func! AutoPairsDefaultPairs()
     let allPairs = {
                 \ 'vim': {'\v^\s*\zs"': ''},
                 \ 'rust': {'\w\zs<': '>', '&\zs''': ''},
+                \ 'php': {'<?': '?>//k', '<?php': '?>//k'},
                 \ }
+
+    " default
     for [filetype, pairs] in items(allPairs)
         if &filetype == filetype
             for [open, close] in items(pairs)
@@ -33,6 +44,29 @@ func! AutoPairsDefaultPairs()
             endfor
         end
     endfor
+
+    " add custom 
+    for [filetype, pairs] in items(g:AutoPairsExtra) 
+        if &filetype != filetype
+            continue
+        end
+        for [open, close] in items(pairs)
+            let r[open] = close
+        endfor
+    endfor
+
+    " remove exclude open tag
+    for [filetype, opens] in items(g:AutoPairsExclude)
+        if &filetype != filetype 
+            continue
+        end
+        for open in opens
+            if has_key(r, open)
+                unlet r[open]
+            endif
+        endfor
+    endfor
+
     let b:autopairs_defaultpairs = r
     return r
 endf
@@ -179,10 +213,6 @@ endf
 "   au FileType html let b:AutoPairs = AutoPairsDefine({'<!--' : '-->'}, ['{'])
 "   add <!-- --> pair and remove '{' for html file
 func! AutoPairsDefine(pairs, ...)
-    if exists("b:autopairs_defined")
-        return
-    endif
-    let b:autopairs_defined = 1
     let r = AutoPairsDefaultPairs()
     if a:0 > 0
         for open in a:1
